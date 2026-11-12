@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CareTrack — Quarantine Facility Patient Management</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar" id="topbar" hidden>
+    <div class="brand">🏥 CareTrack</div>
+    <div class="topbar-right">
+      <span class="role-badge" id="roleBadge"></span>
+      <button id="logoutBtn" class="btn btn-ghost">Switch Role</button>
+    </div>
+  </header>
+
+  <!-- LOGIN / ROLE SELECT -->
+  <section id="loginScreen" class="screen login-screen">
+    <div class="login-card">
+      <h1>🏥 CareTrack</h1>
+      <p class="subtitle">Quarantine Facility Patient Management</p>
+      <p class="hint">Select your role to continue</p>
+      <div class="role-grid">
+        <button class="role-card" data-role="nurse">
+          <span class="role-icon">💉</span>
+          <span class="role-name">Nurse</span>
+          <small>Record daily temperatures</small>
+        </button>
+        <button class="role-card" data-role="doctor">
+          <span class="role-icon">🩺</span>
+          <span class="role-name">Doctor</span>
+          <small>Review patients &amp; log visits</small>
+        </button>
+        <button class="role-card" data-role="admin">
+          <span class="role-icon">📋</span>
+          <span class="role-name">Admin</span>
+          <small>Admissions, discharge &amp; stats</small>
+        </button>
+      </div>
+      <button id="resetDemoBtn" class="btn btn-ghost btn-small reset-link">Reset demo data</button>
+    </div>
+  </section>
+
+  <!-- NURSE SCREEN -->
+  <section id="nurseScreen" class="screen" hidden>
+    <div class="screen-head">
+      <h2>Patients — Temperature Rounds</h2>
+      <p class="screen-sub">Record today's temperature for each patient. Patients already checked today are marked ✅.</p>
+    </div>
+    <div id="nurseList" class="card-grid"></div>
+  </section>
+
+  <!-- DOCTOR SCREEN -->
+  <section id="doctorScreen" class="screen" hidden>
+    <div class="screen-head">
+      <h2>Patients — Daily Rounds</h2>
+      <p class="screen-sub">Review temperature journals, log your visit, and flag patients ready for discharge.</p>
+    </div>
+    <div id="doctorList" class="card-grid"></div>
+  </section>
+
+  <!-- ADMIN SCREEN -->
+  <section id="adminScreen" class="screen" hidden>
+    <div class="screen-head">
+      <h2>Facility Overview</h2>
+      <p class="screen-sub">Occupancy, outcomes, admissions and discharge queue.</p>
+    </div>
+
+    <div id="alertBanner" class="alert-banner" hidden></div>
+
+    <div class="stats-row" id="statsRow"></div>
+
+    <div class="admin-columns">
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Admit New Patient</h3>
+        </div>
+        <form id="admitForm" class="form">
+          <label>Full name
+            <input type="text" id="admitName" required placeholder="e.g. Jordan Lee" />
+          </label>
+          <label>Age
+            <input type="number" id="admitAge" required min="0" max="130" placeholder="e.g. 42" />
+          </label>
+          <label>Room number
+            <input type="number" id="admitRoom" required min="1" max="74" placeholder="Auto-suggested" />
+          </label>
+          <div id="admitError" class="form-error" hidden></div>
+          <button type="submit" class="btn btn-primary" id="admitSubmitBtn">Admit Patient</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Discharge Queue</h3>
+          <span class="panel-sub">Flagged by doctors as 3 full days fever-free</span>
+        </div>
+        <div id="dischargeQueue" class="list-simple"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>All Patients</h3>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="allPatientsTable">
+          <thead>
+            <tr><th>Name</th><th>Room</th><th>Status</th><th>Admitted</th><th>Fever-free streak</th><th>Journal</th></tr>
+          </thead>
+          <tbody id="allPatientsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- PATIENT JOURNAL MODAL (shared, read-only) -->
+  <div id="patientModal" class="modal-overlay" hidden>
+    <div class="modal">
+      <button class="modal-close" data-close="patientModal">✕</button>
+      <div id="patientModalBody"></div>
+    </div>
+  </div>
+
+  <!-- ADD TEMPERATURE MODAL (nurse) -->
+  <div id="tempModal" class="modal-overlay" hidden>
+    <div class="modal modal-small">
+      <button class="modal-close" data-close="tempModal">✕</button>
+      <h3>Record Temperature</h3>
+      <p id="tempModalPatientName" class="modal-patient-name"></p>
+      <div id="tempModalWarning" class="form-warning" hidden></div>
+      <form id="tempForm" class="form">
+        <label>Temperature (°F)
+          <input type="number" id="tempValue" step="0.1" min="90" max="112" required placeholder="e.g. 98.6" />
+        </label>
+        <button type="submit" class="btn btn-primary">Save Reading</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- RECORD VISIT MODAL (doctor) -->
+  <div id="visitModal" class="modal-overlay" hidden>
+    <div class="modal modal-small">
+      <button class="modal-close" data-close="visitModal">✕</button>
+      <h3>Record Doctor Visit</h3>
+      <p id="visitModalPatientName" class="modal-patient-name"></p>
+      <div id="visitModalWarning" class="form-warning" hidden></div>
+      <form id="visitForm" class="form">
+        <label>Notes (optional)
+          <textarea id="visitNotes" rows="3" placeholder="Observations, treatment adjustments..."></textarea>
+        </label>
+        <button type="submit" class="btn btn-primary">Log Visit</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
